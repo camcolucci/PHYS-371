@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 a = 0                          # Starting point
 b = 20                         # Ending point
-n = 100                      # Number of iterations, must be even
+n = 1000                       # Number of iterations, must be even
 m = 1                          # Mass of the block in the oscillator
 k = 1                          # Spring constant
 B = 1                          # Damping Factor
@@ -92,7 +92,7 @@ def vary_beta_and_alpha():                     #beta = 0.1 * omega_0, alpha = 0.
 # Call the function to compute the values and print them
 E_t_1, E_t_2, E_t_3 = vary_beta_and_alpha()
 
-# Optionally, plot the results
+# Plot the results as an overlayed graph containing all three outputs
 
 plt.plot(t, E_t_1, label=r'$\beta={:.2f}, \alpha={:.2f}$'.format(0.1 * omega_0, 0.3 * omega_0))
 plt.plot(t, E_t_2, label=r'$\beta={:.2f}, \alpha={:.2f}$'.format(0.2 * omega_0, 0.2 * omega_0))

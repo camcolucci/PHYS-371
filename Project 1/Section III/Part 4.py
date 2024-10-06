@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 # Initialize the variables that will define the function.
 
 a = 0                          # Starting point
-b = 20                         # Ending point
-n = 100                      # Number of iterations, must be even
+b = 30                         # Ending point
+n = 1000                       # Number of iterations, must be even
 m = 1                          # Mass of the block in the oscillator
 k = 1                          # Spring constant
 B = 1                          # Damping Factor
@@ -33,7 +33,7 @@ def G(t, t_prime, beta):
     tau = t - t_prime
     if tau < 0:
         return 0
-    return (1 / (m * omega_0)) * np.exp(-beta * tau) * np.sin(omega_0 * tau)
+    return (np.exp(-beta * tau) * np.sin(omega_0 * tau))
 
 # Set up Simpson's rule formula
 
@@ -82,7 +82,7 @@ def vary_beta_and_alpha(print_values=False):                     #beta = 0.1 * o
 # Call the function to compute the values and print them
 x_t_1, x_t_2, x_t_3 = vary_beta_and_alpha(print_values=True)
 
-# Optionally, plot the results
+# Plot the results as an overlayed graph containing all three outputs
 
 plt.plot(t, x_t_1, label=r'$\beta={:.2f}, \alpha={:.2f}$'.format(0.1 * omega_0, 0.3 * omega_0))
 plt.plot(t, x_t_2, label=r'$\beta={:.2f}, \alpha={:.2f}$'.format(0.2 * omega_0, 0.2 * omega_0))

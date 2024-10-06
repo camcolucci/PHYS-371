@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 # Initialize the variables that will define the function.
 
 a = 0                          # Starting point
-b = 10                         # Ending point
+b = 20                         # Ending point
 n = 1000                       # Number of iterations, must be even
 m = 1                          # Mass of the block in the oscillator
 k = 1                          # Spring constant
