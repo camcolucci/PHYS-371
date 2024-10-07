@@ -1,4 +1,3 @@
-#%%
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -65,5 +64,3 @@ plt.title("Smooth Potential Energy Function (Harmonic Oscillator)")
 plt.grid(True)
 plt.legend()
 plt.show()
-
-# %%
