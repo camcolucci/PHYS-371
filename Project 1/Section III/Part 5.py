@@ -48,8 +48,9 @@ def simpsons_rule(functions, h):
 
 def compute_SHO(t, beta, alpha):
     t_prime_value = np.linspace(a, t, n)                                                         # Time points for the observed system
+    dt_prime = t_prime_value[1] - t_prime_value[0]                                               # Set local step size
     calculated_value = [F(t_prime, alpha) * G(t, t_prime, beta) for t_prime in t_prime_value]    # Function and Greens funtion values
-    return simpsons_rule(calculated_value, dt)                                                   
+    return simpsons_rule(calculated_value, dt_prime)                                                 
 
 #Find the velocity of the function
 

@@ -48,12 +48,13 @@ def simpsons_rule(functions, h):
 
 def compute_SHO(t, beta, alpha):
     t_prime_value = np.linspace(a, t, n)                                                         # Time points for the observed system
+    dt_prime = t_prime_value[1] - t_prime_value[0]                                               # Set local step size
     calculated_value = [F(t_prime, alpha) * G(t, t_prime, beta) for t_prime in t_prime_value]    # Function and Greens funtion values
-    return simpsons_rule(calculated_value, dt)                                                   
+    return simpsons_rule(calculated_value, dt_prime)                                                  
 
 # Compute x(t) while incorporating the different beta and alpha values
 
-def vary_beta_and_alpha(print_values=False):                     #beta = 0.1 * omega_0, alpha = 0.3 * omega_0
+def vary_beta_and_alpha(print_values=False):    #beta = 0.1 * omega_0, alpha = 0.3 * omega_0
     beta_1 = 0.1 * omega_0
     alpha_1 = 0.3 * omega_0
     x_t_1 = np.array([compute_SHO(ti, beta_1, alpha_1) for ti in t])
@@ -68,7 +69,7 @@ def vary_beta_and_alpha(print_values=False):                     #beta = 0.1 * o
     alpha_3 = 0.1 * omega_0
     x_t_3 = np.array([compute_SHO(ti, beta_3, alpha_3) for ti in t])
 
-# Print the results if requested
+# Lets the functions print if requested
     if print_values:
         print(f"x(t) for beta={beta_1:.2f}, alpha={alpha_1:.2f}:")
         print(x_t_1)
@@ -89,7 +90,7 @@ plt.plot(t, x_t_2, label=r'$\beta={:.2f}, \alpha={:.2f}$'.format(0.2 * omega_0, 
 plt.plot(t, x_t_3, label=r'$\beta={:.2f}, \alpha={:.2f}$'.format(0.3 * omega_0, 0.1 * omega_0))
 plt.xlabel("Time (t)")
 plt.ylabel("Displacement of the mass x(t)")
-plt.title("Smooth Potential Energy Function (Harmonic Oscillator)")
+plt.title("Potential Energy Function (Harmonic Oscillator)")
 plt.grid(True)
 plt.legend(loc="best")
 plt.show()

@@ -8,11 +8,10 @@ b = 20                         # Ending point
 n = 1000                       # Number of iterations, must be even
 m = 1                          # Mass of the block in the oscillator
 k = 1                          # Spring constant
-B = 1                          # Damping Factor
-beta = B / (2*m)               # Damping Coefficient
+beta = 0.1                     # Damping Coefficient, adjusted to show oscillatory nature
 omega_0 = np.sqrt(k / m)       # Natural Frequency
 t = np.linspace(a, b, n)       # Creates time values for the function
-alpha = 0.1                    # Decay constant of the driving force
+alpha = 0.3                    # Decay constant of the driving force, adjusted to show oscillatory nature
 dt = t[1] - t[0]               # Change in time/step size
 
 # Define the force function F(t')
@@ -38,7 +37,6 @@ def G(t, t_prime):
 # Set up Simpson's rule formula
 
 def simpsons_rule(functions, h):
-    n = len(functions)
     result = functions[0] + functions[-1]       # First and last terms
     result += 4 * np.sum(functions[1:n:2])      # Odd terms
     result += 2 * np.sum(functions[2:n-1:2])    # Even terms
@@ -47,20 +45,21 @@ def simpsons_rule(functions, h):
 # Find the total displacement x(t)
 
 def compute_SHO(t):
-    t_prime_value = np.linspace(a, t, n)                                            # Time points for integration
-    calculated_value = [F(t_prime) * G(t, t_prime) for t_prime in t_prime_value]    # Integrand values
-    return simpsons_rule(calculated_value, dt)                                      # Use Simpson's rule to integrate
+    t_prime_value = np.linspace(a, t, n)                                                         # Time points for the observed system
+    dt_prime = t_prime_value[1] - t_prime_value[0]                                               # Set local step size
+    calculated_value = [F(t_prime) * G(t, t_prime) for t_prime in t_prime_value]    # Function and Greens funtion values
+    return simpsons_rule(calculated_value, dt_prime) 
 
 # Compute x(t) over the entire time range
 
 x_t = np.array([compute_SHO(ti) for ti in t])
 
-# Plots the result as a smooth curve, showing that this is a smooth potential energy function
+# Plots the result as a Potential Energy curve
 
 plt.plot(t, x_t,)
 plt.xlabel("Time (t)")
 plt.ylabel("Displacement of the mass x(t)")
-plt.title("Smooth Potential Energy Function (Harmonic Oscillator)")
+plt.title("Potential Energy Function (Harmonic Oscillator)")
 plt.grid(True)
 plt.legend()
 plt.show()
