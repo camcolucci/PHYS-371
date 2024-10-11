@@ -81,7 +81,7 @@ plt.plot(t_analytical, x_analytical, color='r', linestyle = '--', label="Analyti
 for dt in dt_values:
     t = np.arange(a, b, dt)  # Time array with variable dt
     x_vals, v_vals = RK_4th_Order(x_i, v_i, t, dt)
-    plt.plot(t, x_vals, label=f'Numerical (dt={dt})')
+    plt.plot(t, x_vals, label=f'Numerical with dt={dt}')
 
 plt.xlabel('Time (s)')
 plt.ylabel('Displacement (x)')
