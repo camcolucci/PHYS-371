@@ -66,7 +66,7 @@ def RK_4th_Order(x_i, v_i, t, dt):
 
 x_vals, v_vals = RK_4th_Order(x_i, v_i, t, dt)
 
-plt.plot(t, x_vals, label="Numerical")
+plt.plot(t, x_vals, label="Numerical Solution")
 
 # Analytical solution for comparison
 def analytical_solution(t, omega_0, beta):
@@ -75,7 +75,7 @@ def analytical_solution(t, omega_0, beta):
 # Plotting the analytical solution
 t_analytical = np.linspace(a, b, 1000)
 x_analytical = analytical_solution(t_analytical, omega_0, beta)
-plt.plot(t_analytical, x_analytical, color='r', linestyle = '--', label="Analytical")
+plt.plot(t_analytical, x_analytical, color='r', linestyle = '--', label="Analytical Solution")
 
 # Plotting numerical solutions for different delta T values
 for dt in dt_values:
