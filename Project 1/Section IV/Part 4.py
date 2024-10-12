@@ -13,7 +13,7 @@ f_0 = 0.0                   # Driving Force
 omega_d = 0.5               # Driving frequency
 dt_values = [0.1, 0.4, 0.6, 0.7, 0.8]  # Step sizes for numerical solutions
 
-for n in n_values:          # Setting the number of cycles(iterations) for dt
+for n in n_values:
     t = np.linspace(a, b, n)
     dt = t[1] - t[0]
 
@@ -66,7 +66,7 @@ def RK_4th_Order(x_i, v_i, t, dt):
 
 x_vals, v_vals = RK_4th_Order(x_i, v_i, t, dt)
 
-plt.plot(t, x_vals, label="Numerical Solution")
+plt.plot(t, x_vals, label="Numerical")
 
 # Analytical solution for comparison
 def analytical_solution(t, omega_0, beta):
@@ -75,13 +75,13 @@ def analytical_solution(t, omega_0, beta):
 # Plotting the analytical solution
 t_analytical = np.linspace(a, b, 1000)
 x_analytical = analytical_solution(t_analytical, omega_0, beta)
-plt.plot(t_analytical, x_analytical, color='r', linestyle = '--', label="Analytical Solution")
+plt.plot(t_analytical, x_analytical, 'k--', label="Analytical")
 
 # Plotting numerical solutions for different delta T values
 for dt in dt_values:
     t = np.arange(a, b, dt)  # Time array with variable dt
     x_vals, v_vals = RK_4th_Order(x_i, v_i, t, dt)
-    plt.plot(t, x_vals, label=f'Numerical with dt={dt}')
+    plt.plot(t, x_vals, label=f'Numerical (dt={dt})')
 
 plt.xlabel('Time (s)')
 plt.ylabel('Displacement (x)')
