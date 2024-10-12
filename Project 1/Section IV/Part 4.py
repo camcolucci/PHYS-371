@@ -88,3 +88,6 @@ plt.ylabel('Displacement (x)')
 plt.legend()
 plt.grid(True)
 plt.show()
+
+# Part 5: It looks like when the step size is around 0.1 it starts to closely match the analytical solution.
+# Any smaller than that and it will just get more and more precise.
