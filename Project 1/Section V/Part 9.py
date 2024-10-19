@@ -6,7 +6,7 @@ l = 1.0   # length of the pendulum in meters
 g = 9.81  # gravitational acceleration in m/s^2
 theta_0 = np.pi / 4  # initial angle in radians, converts to 45 degrees
 omega_0 = 0.0  # initial angular velocity (rad/s), starting from rest
-num_oscillations = 10  # number of oscillations to simulate
+num_oscillations = 2  # number of oscillations to simulate
 M = 1.0  # mass of the weight on the pendulum
 I = M * l**2  # moment of inertia of the system
 
@@ -74,29 +74,37 @@ if outside_threshold:
     print(f"Fractional Energy did not remain within threshold.")
 else:
     print("All Fractional Energy values remained in threshold")
-    
+
+def small_theta_sol(theta_0, g, l, t_values):
+    return theta_0 * np.cos(np.sqrt(g / l) * t_values)
+
+# Compute the small-angle solution
+theta_analytic = small_theta_sol(theta_0, g, l, time_values)
+
 # Create a figure with two y-axes to overlay the oscillation and the fractional energy
 fig, ax1 = plt.subplots(figsize=(10, 6))
 
-# Plot theta vs time on the first y-axis. This should show the system oscillating
-ax1.plot(time_values, theta_values, 'b-', label='Theta (radians)')
+# Plot the numerical solution for theta (oscillations) on the first y-axis
+ax1.plot(time_values, theta_values, 'b-', label='Numerical Solution (Theta)')
+# Plot the analytic solution for small oscillations
+ax1.plot(time_values, theta_analytic, 'g--', label='Analytic Small-Angle Solution')
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('Angle (radians)', color='b')
 ax1.tick_params('y', colors='b')
 ax1.set_ylim(-1, 1)
+ax1.legend(loc='upper left')
 
-# Create a second y-axis to plot fractional energy difference, this should be a constant line, ideally at 0, to show
-# that total energy is fully conserved in the system
-ax2 = ax1.twinx()
-ax2.plot(time_values, frac_E_diff, 'r-', label='Fractional Energy Difference')
-ax2.set_ylabel('Fractional Energy Difference', color='r')
-ax2.tick_params('y', colors='r')
-ax2.set_ylim(-1, 1)
-plt.annotate(f'Fractional Energy Difference: {avg_frac_E_diff:.2e}', 
-             xy=(1, 1), xycoords='axes fraction', fontsize=12, color='red',
-             xytext=(-10, -10), textcoords='offset points',  # Offset the text a bit from the corner
-             ha='right', va='top',  # Align to the top-right
-             bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.5'))
-plt.title('Nonlinear Pendulum Motion with Energy Conservation')
+# # Create a second y-axis to plot fractional energy difference
+# ax2 = ax1.twinx()
+# ax2.plot(time_values, frac_E_diff, 'r-', label='Fractional Energy Difference')
+# ax2.set_ylabel('Fractional Energy Difference', color='r')
+# ax2.tick_params('y', colors='r')
+# ax2.set_ylim(-1, 1)
+# ax2.legend(loc='upper right')
+
+plt.title('Nonlinear Pendulum Motion with Energy Conservation and Small-Angle Comparison')
 ax1.grid(True)
 plt.show()
+
+"""The analytic solution only works well for small angles from the initial. Accuracy 
+"""

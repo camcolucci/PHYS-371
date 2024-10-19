@@ -53,7 +53,7 @@ omega_values[0] = omega_0
 # Time integration loop using RK4
 for i in range(1, num_steps):
     theta_values[i], omega_values[i] = RK_4th_order(theta_values[i-1], omega_values[i-1], dt)
-    E_values[i] = tot_E(I, omega_values[i], M, theta_values[i], g, l)  # Corrected argument order
+    E_values[i] = tot_E(I, omega_values[i], M, theta_values[i], g, l)
 
 # Calculate initial energy E(t=0)
 E_0 = tot_E(I, omega_values[0], M, theta_values[0], g, l)
@@ -69,13 +69,14 @@ ax1.plot(time_values, theta_values, 'b-', label='Theta (radians)')
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('Angle (radians)', color='b')
 ax1.tick_params('y', colors='b')
-
+ax1.set_ylim(-1,1)
 # Create a second y-axis to plot fractional energy difference, this should be a constant line, ideally at 0, to show
 # that total energy is fully conserved in the system
 ax2 = ax1.twinx()
 ax2.plot(time_values, frac_E_diff, 'r-', label='Fractional Energy Difference')
 ax2.set_ylabel('Fractional Energy Difference', color='r')
 ax2.tick_params('y', colors='r')
+ax2.set_ylim(-1,1)
 plt.title('Nonlinear Pendulum Motion with Energy Conservation')
 ax1.grid(True)
 plt.show()
