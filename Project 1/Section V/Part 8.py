@@ -59,10 +59,23 @@ for i in range(1, step_size):
 # Calculate initial energy E(t=0)
 E_0 = E_values[0]
 
-# Compute fractional energy difference
+# Compute fractional energy difference. The average is computed just for a value to show on the plot so that I can
+# see if things are going in the right direction
 frac_E_diff = (E_values - E_0) / E_0
+avg_frac_E_diff = np.mean(frac_E_diff)
 
-# Create a figure with two y-axes (shared x-axis)
+# Check if the energy deviation is within the threshold. A message will print that says whether all of the 
+# value are, or aren't, within the parameter
+threshold = 1e-8
+outside_threshold = not np.all(np.abs(frac_E_diff) <= threshold)
+
+if outside_threshold:
+    max_deviation_index = np.argmax(np.abs(frac_E_diff) > threshold)
+    print(f"Fractional Energy did not remain within threshold.")
+else:
+    print("All Fractional Energy values remained in threshold")
+
+# Create a figure with two y-axes to overlay the oscillation and the fractional energy
 fig, ax1 = plt.subplots(figsize=(10, 6))
 
 # Plot theta vs time on the first y-axis. This should show the system oscillating
@@ -70,6 +83,7 @@ ax1.plot(time_values, theta_values, 'b-', label='Theta (radians)')
 ax1.set_xlabel('Time (s)')
 ax1.set_ylabel('Angle (radians)', color='b')
 ax1.tick_params('y', colors='b')
+ax1.set_ylim(-1, 1)
 
 # Create a second y-axis to plot fractional energy difference, this should be a constant line, ideally at 0, to show
 # that total energy is fully conserved in the system
@@ -77,6 +91,18 @@ ax2 = ax1.twinx()
 ax2.plot(time_values, frac_E_diff, 'r-', label='Fractional Energy Difference')
 ax2.set_ylabel('Fractional Energy Difference', color='r')
 ax2.tick_params('y', colors='r')
+ax2.set_ylim(-1, 1)
+plt.annotate(f'Fractional Energy Difference: {avg_frac_E_diff:.2e}', 
+             xy=(1, 1), xycoords='axes fraction', fontsize=12, color='red',
+             xytext=(-10, -10), textcoords='offset points',  # Offset the text a bit from the corner
+             ha='right', va='top',  # Align to the top-right
+             bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.5'))
 plt.title('Nonlinear Pendulum Motion with Energy Conservation')
 ax1.grid(True)
 plt.show()
+
+"""For this, I just edited the step size and continued to run the code until I got all of the values within the specified
+threshold. To ensure all of the values are in, I incorporated the "if" statement and defined the threshold to print a
+message stating all of the values ran were in or if some of them deviated. I also included the final value as a part of the
+plot so that I could quickly get a rough idea how the value was changing as I adjusted the step size.
+    """
