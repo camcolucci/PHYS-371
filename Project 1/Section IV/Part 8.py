@@ -80,6 +80,7 @@ fractional_energy = (2 * np.pi) / Q
 print(f"Resonance frequency: {omega_res}")
 print(f"Q-factor: {Q}")
 print(f"Fractional energy loss per cycle: {fractional_energy:.4f}")
+print(f"Full Width Half Max: {d_omega}")
 
 # Plot the result
 plt.figure(figsize=(10, 6))

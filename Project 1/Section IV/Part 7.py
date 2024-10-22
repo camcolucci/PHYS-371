@@ -71,6 +71,7 @@ d_omega = omega_d[upper_index] - omega_d[lower_index]
 # Calculate Q-factor
 Q = omega_res / d_omega
 
+print(f"Full Width Half Max: {d_omega}")
 print(f"Resonance frequency: {omega_res}")
 print(f"Q-factor: {Q}")
 
