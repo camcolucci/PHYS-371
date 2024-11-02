@@ -12,7 +12,7 @@ def First_order_wave_system(state, x, k):
 # Initializes the RK4 solver for the wave equation
 def main():
     L = 1.0  # Length (scaled to 1)
-    Lam = 0.25
+    Lam = 4
     k = (2 * np.pi) / Lam # Wavenumber for the chosen wavelength (lambda = 2pi/k)
     N = 1000  # Number of steps
     a = 0  # Start of the interval
