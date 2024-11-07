@@ -66,9 +66,9 @@ def find_harmonic_wave_numbers(L, N, initial_conditions, tolerance=1e-3):
         results[f"n={n}"] = k_n
     return results
 
-# Main function to initialize and solve the standing wave equation
+# Main function to initialize and solve the standing wave equation for modes n=1, 2, and 3
 def main():
-    """Main function for solving and plotting the standing wave equation for modes n=1, 2, and 3 on a fixed-open string."""
+    """Main function for solving and plotting the standing wave equation"""
     L = 1.0  # Length of the string
     N = 100  # Number of steps for RK4
     a_init = 1.0  # Initial slope (dy/dx) at x = 0
@@ -95,14 +95,19 @@ def main():
         numerical_lambda = 2 * np.pi / numerical_k
         numerical_frequency = numerical_k / (2 * np.pi)
 
+        # Calculate and print fractional discrepancies
+        k_discrepancy = abs(numerical_k - analytic_k) / analytic_k
+        lambda_discrepancy = abs(numerical_lambda - analytic_lambda) / analytic_lambda
+        frequency_discrepancy = abs(numerical_frequency - analytic_frequency) / analytic_frequency
+
         # Print the values for comparison
         print(f"\nMode n={n}:")
         print(f"  Numerical k = {numerical_k:.6f}, Analytical k = {analytic_k:.6f}, "
-              f"Fractional Discrepancy = {abs(numerical_k - analytic_k) / analytic_k:.6f}")
+              f"Fractional Discrepancy = {k_discrepancy:.6f}")
         print(f"  Numerical wavelength = {numerical_lambda:.6f}, Analytical wavelength = {analytic_lambda:.6f}, "
-              f"Fractional Discrepancy = {abs(numerical_lambda - analytic_lambda) / analytic_lambda:.6f}")
+              f"Fractional Discrepancy = {lambda_discrepancy:.6f}")
         print(f"  Numerical frequency = {numerical_frequency:.6f}, Analytical frequency = {analytic_frequency:.6f}, "
-              f"Fractional Discrepancy = {abs(numerical_frequency - analytic_frequency) / analytic_frequency:.6f}")
+              f"Fractional Discrepancy = {frequency_discrepancy:.6f}")
 
         # Plot the displacement for each mode
         plt.plot(x_points, solution[:, 0], label=f"Mode n={n} (k = {numerical_k:.4f})")
