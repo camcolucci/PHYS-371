@@ -42,17 +42,26 @@ class RK4:
         tpoints = np.arange(self.a, self.b, self.step_size)
         xpoints = []
         x = self.x_0
-        
+        max_psi_limit = 1e6 
+
         for t in tpoints:
             xpoints.append(x.copy())  # Append the current state vector
-            k1 = self.step_size * self.func(x, t)  # Scales the derivative by mulitiplying by step_size through all iterations of k
+
+            # Calculate RK4 intermediate steps
+            k1 = self.step_size * self.func(x, t)
             k2 = self.step_size * self.func(x + 0.5 * k1, t + 0.5 * self.step_size)
             k3 = self.step_size * self.func(x + 0.5 * k2, t + 0.5 * self.step_size)
             k4 = self.step_size * self.func(x + k3, t + self.step_size)
-            x += (1.0 / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)  # Updates the steps with the k values
-        
-        return np.array(tpoints), np.array(xpoints)
-    
+
+            # Update the solution
+            x += (1.0 / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+
+            # Check for divergence
+            if np.any(np.abs(x) > max_psi_limit):  # If any element exceeds the limit
+                print("Warning: Solution diverged at t =", t)
+                break
+        return np.array(tpoints[:len(xpoints)]), np.array(xpoints)
+
     def plot(self, tpoints, xpoints):
         """
         Plots the results of the ODE approximation.
@@ -63,10 +72,12 @@ class RK4:
         xpoints : numpy.ndarray
             Array of approximated x values.
         """
-        plt.plot(tpoints, xpoints[:, 0], label= 'Displacement')
-        plt.plot(tpoints, xpoints[:, 1], label= 'Velocity', linestyle='--')
+        plt.plot(tpoints, xpoints[:, 0], label='Displacement')
+        plt.plot(tpoints, xpoints[:, 1], label='Velocity', linestyle='--')
         plt.xlabel("Position $x$")
         plt.ylabel("Displacement and Velocity")
         plt.legend()
         if self.enablePlot:
             plt.show()
+
+
