@@ -90,3 +90,24 @@ while len(eigenvalues) < num_bound_states:
 for i, energy in enumerate(eigenvalues, start=1):
     print(f"Eigenvalue {i}: E = {energy:.4f}")
 
+
+plt.figure(figsize=(10, 6))
+
+# Compute Morse potential values over the range of x values
+morse_potential_values = morse_function(x_values, D, a, x_0)
+
+# Plot the Morse potential
+plt.plot(x_values, morse_potential_values, label="Morse Potential $V(x)$", color='black', linestyle='-', linewidth=1.5)
+
+# Plot the wavefunctions for the eigenstates
+for i, psi_values in enumerate(eigenfunctions):
+    # Scale the wavefunctions to make them easier to see with the morse potential
+    scaled_psi_values = psi_values / max(abs(psi_values)) * abs(eigenvalues[i])  # Normalize the values to plot
+    plt.plot(x_values, scaled_psi_values + eigenvalues[i], label=f"$\\psi(x)$ for eigenvalue {i+1}: E = {eigenvalues[i]:.4f}")
+
+plt.xlabel("Displacement (x)")
+plt.ylabel("Wavefunction $\\psi(x)$")
+plt.title("Wavefunctions and Morse Potential Overlay")
+plt.legend()
+plt.grid(True)
+plt.show()
