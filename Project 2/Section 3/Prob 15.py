@@ -101,9 +101,9 @@ plt.plot(x_values, morse_potential_values, label="Morse Potential $V(x)$", color
 
 # Plot the wavefunctions for the eigenstates
 for i, psi_values in enumerate(eigenfunctions):
-    # Scale the wavefunctions to make them easier to see with the morse potential
-    scaled_psi_values = psi_values / max(abs(psi_values)) * abs(eigenvalues[i])  # Normalize the values to plot
-    plt.plot(x_values, scaled_psi_values + eigenvalues[i], label=f"$\\psi(x)$ for eigenvalue {i+1}: E = {eigenvalues[i]:.4f}")
+    # Normalize the wavefunctions for visualization
+    norm_psi_values = psi_values / max(abs(psi_values)) * 0.5 * D
+    plt.plot(x_values, norm_psi_values, label=f"$\\psi(x)$ for eigenvalue {i+1}: E = {eigenvalues[i]:.4f}")
 
 plt.xlabel("Displacement (x)")
 plt.ylabel("Wavefunction $\\psi(x)$")
