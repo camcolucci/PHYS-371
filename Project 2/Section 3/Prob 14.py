@@ -83,7 +83,7 @@ def solve_for_psi(E):
     # Solve the system using RK4
     x_values, solution = rk4_solver.solve()
     if len(x_values) < N:  # Checks the solver to see if the function diverged
-        print(f"Solver diverged for E = {E:.4f}")
+        print(f"Solver diverged for Eigenstate = {E:.4f}")
         return np.array([]), np.array([])  # Return empty arrays if diverged
     return x_values, solution[:, 0]
 
@@ -95,7 +95,7 @@ tolerance = 1e-5      # Tolerance for determining if psi(x) decays to zero
 E = -D / 2            # Initial guess for energy, starting halfway down the potential well
 step_size = 0.05      # Step size for incrementing the energy guess
 
-# Loop to find the lowest eight bound states with early exit handling if the function diverges
+# Loop to find the lowest eight eigenvalues, skipping those wherethe function diverges
 while len(eigenvalues) < num_bound_states:
     x_values, psi_values = solve_for_psi(E)
     
@@ -107,11 +107,11 @@ while len(eigenvalues) < num_bound_states:
     
     # Check if psi decays near zero at the endpoint
     if abs(psi_end) < tolerance:
-        # If psi(x) approaches zero, the eigenvalue and eigenfunction is stored
+        # If psi approaches zero, the eigenvalue and eigenfunction is stored
         eigenvalues.append(E)
         eigenfunctions.append(psi_values)
         print(f"Found Eigenstate {len(eigenvalues)} with E = {E:.4f}")
-        # Increase energy guess significantly to find the next bound state
+        # Increase energy guess to find the next bound state
         E += 0.5
     else:
         # Adjust energy incrementally to search for the next bound state
@@ -125,19 +125,3 @@ while len(eigenvalues) < num_bound_states:
 for i, E in enumerate(eigenvalues, start=1):
     print(f"Eigenvalue {i}: E = {E:.4f}")
 
-# Plot the wavefunctions for the bound states
-plt.figure(figsize=(10, 6))
-for i, psi_values in enumerate(eigenfunctions):
-    plt.plot(x_values, psi_values, label=f"$\\psi(x)$ for eigenvalue {i+1}: E = {eigenvalues[i]:.4f}")
-
-plt.xlabel("x")
-plt.ylabel("Wavefunction $\\psi(x)$")
-plt.title("Wavefunctions for Bound States of the Morse Potential")
-plt.legend()
-plt.show()
-
-# Output some psi values for the last eigenfunction to check results
-# We should see them oscillate around zero for a bound state
-print("\nSample psi values for the last eigenfunction:")
-for x, psi in zip(x_values, eigenfunctions[-1]):
-    print(f"x: {x:.4e} m, psi(x): {psi:.4e}")
