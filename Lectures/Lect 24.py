@@ -1,187 +1,158 @@
-# pylint: disable=invalid-name, redefined-outer-name, trailing-whitespace, line-too-long, ambiguous-variable-name
 from random import random, randrange
-from matplotlib.cm import viridis  # or 'plasma', 'magma', 'inferno'
+from matplotlib.cm import plasma  # For color mapping
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-
-class MonteCarloGas:
+class QuantumSimulator:
     """
-    Monte Carlo simulation of N non-interacting point particles trapped in a 
-    one-dimensional infinite well of length L.
-    
-    ## Keyword arguments
-    --------------------
-    N : |int|
-        Total number of particles
-    epsilon1 : |float|
-        Ground state energy (per particle)
-    kT : |float|
-        Temperature in dimensionless energy units
-    ns : |int|
-        Total number of Monte Carlo sweeps
-    """
-    
-    def __init__(self, N=1000, epsilon1=1.0, kT=10.0, ns=10000):
-        self.N = N # Total number of particles
-        self.epsilon1 = epsilon1 # Ground state energy
-        self.kT = kT # Temperature (kB*T)
-        self.ns = ns # Number of Monte Carlo sweeps
-        self.beta = 1.0/kT # Inverse temperature
-        
-        # Initialize arrays
-        self.n = np.ones(N, dtype=int) # Quantum numbers (all particles start in ground state)
-        self.E = np.zeros(ns) # Total energy at each step
-        self.E[0] = self.compute_total_energy()  # Store initial energy
+    Simulation of N independent particles in a 1D infinite potential well using Monte Carlo methods.
 
-        
-    def compute_energy_change(self, n, direction):
+    Attributes:
+        particle_count (int): Total number of particles in the system.
+        ground_state_energy (float): Energy of the ground state per particle.
+        kbT (float): Dimensionless kbT.
+        steps (int): Total number of Monte Carlo iterations.
+        beta (float): Inverse kbT (1/kbT).
+        quantum_states (numpy.ndarray): Array of quantum states for each particle.
+        energy_history (numpy.ndarray): Array to track total energy over time.
+    """
+
+    def __init__(self, particle_count=1000, ground_state_energy=1.0, kbT=10.0, steps=10000):
         """
-        Compute energy change for transition n -> n +- 1.
-        
-        ## Keyword arguments
-        --------------------
-        n : |int|
-            Current quantum number
-        direction : |int|
-            +1 for increase, -1 for decrease
-        
-        ## Returns
-        ----------
-        |float| : Energy change dE
+        Initialize the quantum system and simulation parameters.
+
+        Args:
+            particle_count (int, optional): Number of particles. Defaults to 1000.
+            ground_state_energy (float, optional): Ground state energy. Defaults to 1.0.
+            kbT (float, optional): System kbT. Defaults to 10.0.
+            steps (int, optional): Number of Monte Carlo iterations. Defaults to 10000.
         """
-        n_final = n+direction
-        E_initial = self.epsilon1*n**2
-        E_final = self.epsilon1*n_final**2
-        return E_final-E_initial
-        
-    def compute_total_energy(self):
+        self.particle_count = particle_count  # Total number of particles
+        self.ground_state_energy = ground_state_energy  # Energy of the ground state per particle
+        self.kbT = kbT  # Dimensionless kbT of the system
+        self.steps = steps  # Total simulation steps
+        self.beta = 1.0 / kbT  # Inverse kbT
+
+        # Initialize particle quantum states and energy tracking
+        self.quantum_states = np.ones(particle_count, dtype=int)  # Start all particles in ground state
+        self.energy_history = np.zeros(steps)  # Track energy at each step
+        self.energy_history[0] = self.calculate_total_energy()  # Initial system energy
+
+    def calculate_energy_difference(self, state, change):
         """
-        Compute total energy for current state.
-        
-        ## Returns
-        ----------
-        |float| : Total energy
+        Compute the change in energy from a quantum state transition.
+
+        Args:
+            state (int): Current quantum state.
+            change (int): Direction of transition (+1 for up, -1 for down).
+
+        Returns:
+            float: Energy difference due to the transition.
         """
-        return self.epsilon1*np.sum(self.n**2)
-    
-    def try_transition(self, i, step):
+        new_state = state + change
+        initial_energy = self.ground_state_energy * state**2
+        final_energy = self.ground_state_energy * new_state**2
+        return final_energy - initial_energy
+
+    def calculate_total_energy(self):
         """
-        Attempt a transition for particle i at Monte Carlo step.
-        
-        ## Keyword arguments
-        --------------------------
-        i : |int|
-            Particle index
-        step : |int|
-            Current Monte Carlo step
+        Compute the total energy of the system.
+
+        Returns:
+            float: Total energy of all particles.
         """
-        # Randomly choose up or down transition
-        direction = 1 if random() < 0.5 else -1
-        
-        # Handle ground state case
-        if self.n[i] == 1 and direction == -1: # Is in ground state and trying to go down
-            self.E[step] = self.E[step-1] # Energy does not change
+        return self.ground_state_energy * np.sum(self.quantum_states**2)
+
+    def attempt_transition(self, particle_index, current_step):
+        """
+        Attempt a quantum state transition for a given particle.
+
+        Args:
+            particle_index (int): Index of the particle to attempt a transition.
+            current_step (int): Current Monte Carlo iteration index.
+        """
+        direction = 1 if random() < 0.5 else -1  # Determine transition direction
+
+        # Prevent downward transition from the ground state
+        if self.quantum_states[particle_index] == 1 and direction == -1:
+            self.energy_history[current_step] = self.energy_history[current_step - 1]
             return
-            
-        # Compute energy change
-        dE = self.compute_energy_change(self.n[i], direction)
-        
-        # Handle transitions:
-        # Downward transitions are always accepted if not in ground state
-        #   as they are energetically favorable.
 
-        if direction == -1: # Downward transition
-            if self.n[i] > 1: # Accept with certainty if not in ground state
-                self.n[i] += direction # Update quantum number
-                self.E[step] = self.E[step-1]+dE # Update total energy
-            else: # Reject transition
-                self.E[step] = self.E[step-1] # Energy does not change
-                
-        # Upward transitions are accepted with Metropolis probability
-        #   P_accept = exp(-beta*dE)
-        #   where beta = 1/kT
-        
-        else: # Upward transition
-            # Metropolis acceptance probability
-            P_accept = np.exp(-self.beta*dE)
-            if random() < P_accept: # Accept transition if random number (0-1) is less than P_accept
-                self.n[i] += direction
-                self.E[step] = self.E[step-1]+dE
-            else: # Reject transition
-                self.E[step] = self.E[step-1]
-                
-    def run_simulation(self):
-        """
-        Run the full Monte Carlo simulation.
-        
-        ## Returns
-        ----------
-        |np.ndarray| : Array of energy values at each step
-        """
-        for step in range(1, self.ns):
-            # Randomly select particle
-            i = randrange(self.N)
-            # Try transition
-            self.try_transition(i, step)
-            
-        return self.E
-    
-# Create instance and run simulation
-mc_gas = MonteCarloGas()
-energies = mc_gas.run_simulation()
-print(f"Final energy: {energies[-1]}")
+        # Calculate energy difference for the proposed transition
+        delta_energy = self.calculate_energy_difference(self.quantum_states[particle_index], direction)
 
-# Plot results for problem 13
+        if direction == -1:  # Downward transition
+            if self.quantum_states[particle_index] > 1:  # Allowed if not in ground state
+                self.quantum_states[particle_index] += direction
+                self.energy_history[current_step] = self.energy_history[current_step - 1] + delta_energy
+            else:
+                self.energy_history[current_step] = self.energy_history[current_step - 1]
+        else:  # Upward transition
+            acceptance_probability = np.exp(-self.beta * delta_energy)
+            if random() < acceptance_probability:  # Accept based on probability
+                self.quantum_states[particle_index] += direction
+                self.energy_history[current_step] = self.energy_history[current_step - 1] + delta_energy
+            else:
+                self.energy_history[current_step] = self.energy_history[current_step - 1]
+
+    def execute_simulation(self):
+        """
+        Perform the Monte Carlo simulation.
+
+        Returns:
+            numpy.ndarray: Energy history of the system over time.
+        """
+        for step in range(1, self.steps):
+            particle = randrange(self.particle_count)  # Select a random particle
+            self.attempt_transition(particle, step)  # Attempt a quantum state change
+
+        return self.energy_history
+
+# Run the simulation
+simulator = QuantumSimulator()
+energy_trajectory = simulator.execute_simulation()
+print(f"Final system energy: {energy_trajectory[-1]}")
+
+# Plot results of the simulation
 plt.figure(figsize=(10, 6))
-plt.plot(range(mc_gas.ns), energies)
-plt.xlabel('Monte Carlo Step')
-plt.ylabel('Total Energy')
-plt.title('Energy Evolution in 1D Quantum Gas')
+plt.plot(range(simulator.steps), energy_trajectory)
+plt.xlabel('Monte Carlo Iteration')
+plt.ylabel('Total System Energy')
+plt.title('Energy Evolution in Quantum System')
 plt.grid(True)
 plt.show()
 
-# Run multiple simulations and plot for problem 14-16
+# Perform multiple runs and analyze results
 plt.figure(figsize=(10, 6))
-num_runs = 10 # Number of runs of the simulation
-colors = viridis(np.linspace(0, 1, num_runs)) # Generate colors for each run
-final_energies = [] # Store final energies for each run for comparison
+num_simulations = 20  # Number of independent runs
+colors = plasma(np.linspace(0, 1, num_simulations))  # Assign colors for plots
+final_energies = []  # Collect final energies of each run
 
-# Parameters for the simulation to solve the <E> =/= kT/2 problem
-N = 1000
-epsilon1 = 1.0
-kT = 100.0 # kT >> epsilon1 for high temperature limit
-ns = 500000 # Large number of steps for convergence
+# Simulation parameters
+particle_count = 1000
+ground_state_energy = 1.0
+kbT = 100.0  # High kbT regime
+steps = 100000  # Longer simulation for convergence
 
-for i in range(num_runs):  # Run num_runs number of simulations
-    mc_gas = MonteCarloGas(N, epsilon1, kT, ns) # Remove input parameters to use defaults
-    energies = mc_gas.run_simulation()
-    # print(f"Final energy for run {i+1}: {energies[-1]}")
-    final_energies.append(energies[-1])
-    plt.plot(range(mc_gas.ns), energies, 
-             color=colors[i], alpha=0.7,
-             label=f'Run {i+1}')
+for run in range(num_simulations):
+    simulation = QuantumSimulator(particle_count, ground_state_energy, kbT, steps)
+    trajectory = simulation.execute_simulation()
+    final_energies.append(trajectory[-1])
+    plt.plot(range(simulation.steps), trajectory, color=colors[run], alpha=0.7, label=f'Run {run + 1}')
 
-# Calculate mean and standard deviation
-mean = np.mean(final_energies)
-std = np.std(final_energies)
+# Calculate statistics
+mean_energy = np.mean(final_energies)
+std_dev_energy = np.std(final_energies)
+print(f"Average final energy: {mean_energy}")
+print(f"Standard deviation: {std_dev_energy}")
 
-print(f"Mean final energy: {mean}")
-print(f"Standard deviation: {std}")
+mean_energy_per_particle = mean_energy / particle_count
+print(f"Mean energy per particle: {mean_energy_per_particle}")
+print(f"Expected energy per particle: {kbT / 2}")
 
-# The energy per particle is mean/N
-mean_per_particle = mean/N
-print(f"Mean final energy per particle: {mean_per_particle}")
-print(f"Expected energy per particle: {kT/2}")
-
-# The standard deviation per particle is std/N
-std_per_particle = std/N
-print(f"Standard deviation per particle: {std_per_particle}")
-
-plt.xlabel('Monte Carlo Step')
-plt.ylabel('Total Energy')
-plt.title('Multiple Runs of 1D Quantum Gas Simulation')
+plt.xlabel('Monte Carlo Iteration')
+plt.ylabel('Total System Energy')
+plt.title('Multiple Runs of Quantum System Simulation')
 plt.grid(True)
 plt.show()
