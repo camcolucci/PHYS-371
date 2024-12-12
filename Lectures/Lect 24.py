@@ -132,8 +132,8 @@ final_energies = []  # Collect final energies of each run
 # Simulation parameters
 N = 1000
 epsilon_1 = 1.0
-kbT = 100.0  # High kbT regime
-n_s = 100000  # Longer simulation for convergence
+kbT = 10.0  # High kbT regime
+n_s = 10000  # Longer simulation for convergence
 
 for run in range(num_simulations):
     simulation = QuantumSimulator(N, epsilon_1, kbT, n_s)
