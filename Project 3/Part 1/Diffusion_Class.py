@@ -1,5 +1,6 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 class DiffusionSolver:
     """Diffusion Solver Class
@@ -71,7 +72,9 @@ class DiffusionSolver:
         T_f (float): Final time to solve the equation in seconds.
         tolerance (float, optional): Tolerance for the solution. Defaults to 1e-5.
         
-        
+        Returns:
+        list: List of time steps.
+        list: List of temperature arrays at different time steps.
         """
         steps = int(T_f/self.dt)
         
@@ -90,5 +93,34 @@ class DiffusionSolver:
                 print(f"Steady state reached at time {time[-1]} s.")
                 break
         return time, temperature
+    
+    def plot_results(self, time, temperature):
+        """Plot the temperature distribution at different time steps
+
+        Args:
+        time (list): List of time steps.
+        temperature (list): List of temperature arrays at different time steps.
+        
+        """
+        
+        #Create a color map
+        color_map = cm.jet(np.linspace(0, 1, len(time)))
+        
+        # Plot analytical steady state solution
+        x = np.linspace(0, self.L, 1000)
+        T_ss = -50*x + 50
+        plt.plot(x, T_ss, 'k--', label='Analytical steady state')
+        
+        # Plot selected temperature distributions (e.g., every 12th step) to avoid legend clutter
+        step_interval = max(len(time) // 12, 1)  # Adjust step size to show around 10 steps
+        for i in range(0, len(time), step_interval):
+            plt.plot(np.linspace(0, self.L, self.N), temperature[i],
+                 color=color_map[i], label=f"Time: {time[i]:.2f} s")
+        
+        plt.xlabel("Length (m)")
+        plt.ylabel("Temperature (ºC)")
+        plt.title("Temperature Distribution Across the Steel Rod")
+        plt.legend()
+        plt.show()
         
         
