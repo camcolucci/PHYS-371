@@ -6,14 +6,14 @@ class DiffusionSolver:
     """Diffusion Solver Class
     """
     
-    def __init__(self, L=1.0, T_hot=50, T_cold=0, alpha=0.5, T_init=20, dx=0.01):
+    def __init__(self, L=1.0, T_hot=50, T_cold=0, D=0.5, T_init=20, dx=0.01):
         """Initialize the Diffusion Solver
 
         Args:
         L (float, optional): Length of rod in meters. Defaults to 1.0.
         T_hot (int, optional): Hot reservoir temperature in C. Defaults to 50.
         T_cold (int, optional): Cold reservoir temperature in D. Defaults to 0.
-        alpha (float, optional): Thermal Diffusivity in m^2/s. Defaults to 0.5.
+        D (float, optional): Thermal Diffusivity in m^2/s. Defaults to 0.5.
         T_init (int, optional): Initial temperature of the rod in C. Defaults to 20.
         
         """
@@ -21,14 +21,14 @@ class DiffusionSolver:
         self.L = L
         self.T_hot = T_hot
         self.T_cold = T_cold
-        self.alpha = alpha
+        self.D = D
         self.T_init = T_init
         self.dx = dx
         
         # Derived parameters
         self.N = int(L/dx)  # Number of grid points
-        self.dt = dx**2/(2*alpha) # Time step
-        self.k = alpha*self.dt/dx**2   # Diffusion coefficient
+        self.dt = dx**2/(2*D) # Time step
+        self.k = D*self.dt/dx**2   # Diffusion coefficient
         
         #Stability check of the system
         if self.k > 0.5:
