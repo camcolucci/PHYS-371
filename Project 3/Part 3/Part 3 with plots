@@ -215,4 +215,4 @@ plt.show()
 # Run simulation with 10000 particles
 simulator = RandomWalkSimulator(particle_count=10000, step_count=10000, step_size=1.0)
 simulator.simulate_walks()
-simulator.plot_position_histograms(steps_to_plot=[10, 1000, 5000, 10000], bin_sizes=[10, 50, 100])
+simulator.plot_position_histograms(steps_to_plot=[10, 1000, 5000, 10000], bin_sizes=[10, 100, 1000])
