@@ -5,8 +5,7 @@ class RandomWalkSimulator:
     """
     A simulator for 2D random walks involving multiple particles.
 
-    The simulation involves a specified number of particles performing random walks with a fixed step size 
-    and random direction for each step.
+    The simulation involves a specified number of particles performing random walks with a fixed step size and random direction for each step.
     """
 
     def __init__(self, particle_count=1000, step_count=10000, step_size=1.0):
@@ -166,42 +165,27 @@ class RandomWalkSimulator:
         plt.suptitle(f"Cross-sections at Step {step_index}")
         plt.show()
 
-if __name__ == "__main__":
-    num_steps = 10000
-    particle_numbers = [10, 100, 1000, 10000]
-    step_length = 1.0
-
-    for particle_count in particle_numbers:
-        print(f"Simulating {particle_count} particles...")
-        simulator = RandomWalkSimulator(particle_count, num_steps, step_length)
-        simulator.simulate_walks()
-        msd, rmsd = simulator.calculate_mean_squared_displacement()
-
-        alpha, C = simulator.fit_to_power_law(msd)
-        print(f"Particles: {particle_count}, alpha: {alpha:.4f}, C: {C:.4f}")
-        
-
 # Test different particle numbers
-num_steps = 10000
+num_steps = 15000
 particle_numbers = [10, 100, 1000, 10000]
 step_length = 1.0
 results = []
 
 for particle_count in particle_numbers:
-    # Initialize the simulator and run the random walk simulation
+    # Initialize and run simulation
     print(f"Running simulation with {particle_count} particles...")
     simulator = RandomWalkSimulator(particle_count=particle_count, step_count=num_steps, step_size=step_length)
     simulator.simulate_walks()
 
-    # Calculate the mean squared displacement (MSD) and root mean squared displacement (RMSD)
+    # Compute MSD and RMSD
     msd, rmsd = simulator.calculate_mean_squared_displacement()
     results.append((msd, rmsd))
 
-# Plot the results
+# Plot results
 steps = np.arange(num_steps + 1)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
-# Plot the Mean Square Displacement (MSD) for different particle numbers
+# Plot MSD
 for i, particle_count in enumerate(particle_numbers):
     ax1.plot(steps, results[i][0], label=f'# of particles = {particle_count}')
 ax1.set_xlabel('Steps')
@@ -210,7 +194,7 @@ ax1.set_title('Mean Square Displacement (MSD)')
 ax1.legend()
 ax1.grid(True)
 
-# Plot the Root Mean Square Displacement (RMSD) for different particle numbers
+# Plot RMSD
 for i, particle_count in enumerate(particle_numbers):
     ax2.plot(steps, results[i][1], label=f'# of particles = {particle_count}')
 ax2.set_xlabel('Steps')
