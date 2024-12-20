@@ -127,7 +127,7 @@ class DiffusionSolver2D:
         time -- List of times corresponding to saved profiles.
         msd -- List of MSD values for each time step.
         """
-        plt.figure(figsize=(10, 6))  # Set figure size for plots
+        plt.figure(figsize=(9, 6))  # Set figure size for plots
         plt.plot(time, msd, marker='o', linestyle='-', color='b')  # MSD vs. time plot
         plt.xlabel("Time (s)")  # Label x-axis
         plt.ylabel("Mean Squared Displacement (cm^2)")  # Label y-axis
