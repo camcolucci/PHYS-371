@@ -12,6 +12,6 @@ air_solver.plot_results(time_air, snapshots_air)  # Plot the results
 D_water = 2e-5  # Diffusion coefficient for water in cm^2/s
 water_solver = DiffusionSolver2D(D=D_water)  # Initialize the solver
 print("Running 2D Diffusion Solver for water...")
-time_water, snapshots_water = water_solver.solve(t_final=5.0)  # Run the simulation for 10 seconds
+time_water, snapshots_water = water_solver.solve(t_final=400.0)  # Run the simulation for 10 seconds
 water_solver.plot_results(time_water, snapshots_water)  # Plot the results
 
