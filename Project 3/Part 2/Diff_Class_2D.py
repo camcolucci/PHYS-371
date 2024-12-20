@@ -1,127 +1,117 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
-class DiffusionSolver_2D:
-    """2D Diffusion Solver Class
-    Solves the 2D heat diffusion equation using the FTCS (Forward Time Central Space) method.
-    """
-    
-    def __init__(self, L=1.0, T_hot=50, T_cold=0, D, T_init=20, dx=0.01):
-        """Initialize the 2D Diffusion Solver
+class DiffusionSolver2D:
+    """Solves the 2D diffusion equation using FTCS method."""
 
-        Args:
-        L (float, optional): Length of the square domain in meters. Defaults to 1.0.
-        T_hot (int, optional): Temperature at the hot boundaries in °C. Defaults to 50.
-        T_cold (int, optional): Temperature at the cold boundaries in °C. Defaults to 0.
-        D (float, optional): Thermal diffusivity in cm²/s.
-        T_init (int, optional): Initial temperature of the domain in °C. Defaults to 20.
-        dx (float, optional): Spatial step size in meters. Defaults to 0.01.
+    def __init__(self, D, L=2.0, dx=0.05, A=1.0):
         """
-        # Given parameters
-        self.L = L
-        self.T_hot = T_hot
-        self.T_cold = T_cold
-        self.D = D
-        self.T_init = T_init
-        self.dx = dx
-        
-        # Derived parameters
-        self.N = int(L / dx)  # Number of grid points in each direction
-        self.dt = dx**2 / (4 * D)  # Time step size based on stability condition
-        self.k = D * self.dt / dx**2  # Diffusion coefficient
+        Initialize the Diffusion Solver for a 2D grid.
 
-        # Stability check for FTCS scheme
-        if self.k > 0.25:
-            raise ValueError("Stability condition not met. Reduce time step or increase grid points.")
+        Keyword Arguments:
+        D -- Thermal Diffusivity in cm^2/s.
+        L -- Domain size in cm (default 2.0 cm).
+        dx -- Grid spacing in cm (default 0.05 cm).
+        A -- Initial concentration value at the center (default 1.0).
+        """
+        self.D = D  # Diffusion coefficient
+        self.L = L  # Length of the simulation domain
+        self.dx = dx  # Distance between grid points
+        self.A = A  # Initial peak concentration
 
-        # Initialize the temperature array
-        self.T = np.full((self.N, self.N), T_init)  # 2D array initialized to T_init
-        self.T_updated = np.zeros_like(self.T)  # Placeholder for the updated temperature array
-        
-        # Apply boundary conditions
-        self.T[:, 0] = T_hot   # Left boundary
-        self.T[:, -1] = T_cold  # Right boundary
-        self.T[0, :] = T_hot   # Top boundary
-        self.T[-1, :] = T_cold  # Bottom boundary
-    
+        # Calculate time step size for stability
+        self.dt = (dx**2) / (4 * D) * 0.75  # Stability time step scaled to ensure stability criterion is met
+        self.k = D * self.dt / dx**2  # Non-dimensional diffusion constant
+
+        # Stability check for each time step
+        if self.k >= 0.25:
+            raise ValueError(f"Stability condition not met. k = {self.k} is too large.")
+
+        # Set up the simulation grid
+        self.N = int(L / dx)  # Number of grid points per axis
+        self.x = np.linspace(-L/2, L/2, self.N)  # x-coordinates for the grid
+        self.y = np.linspace(-L/2, L/2, self.N)  # y-coordinates for the grid
+        self.X, self.Y = np.meshgrid(self.x, self.y)  # 2D coordinate grid
+
+        # Initialize the concentration arrays
+        self.T = np.zeros((self.N, self.N))  # Array for the current concentration
+        self.T_updated = np.zeros((self.N, self.N))  # Array for the next step
+
+        # Set the initial condition: peak concentration at the grid center
+        center = self.N // 2
+        self.T[center, center] = self.A
+
     def time_step_FTCS(self):
-        """Perform one time step using the Forward Time Central Space (FTCS) method.
-        
-        Updates the temperature field based on the central difference in both spatial directions.
+        """
+        Perform a single time step update using FTCS.
 
         Returns:
-        float: Maximum temperature difference in the system after the update.
+        max_diff -- The maximum change in concentration during the update.
         """
-        # Update the temperature array for all interior points
-        for i in range(1, self.N - 1):
-            for j in range(1, self.N - 1):
+        for i in range(1, self.N-1):
+            for j in range(1, self.N-1):
+                # FTCS update for interior points based on neighbors
                 self.T_updated[i, j] = self.T[i, j] + self.k * (
-                    self.T[i + 1, j] + self.T[i - 1, j] + self.T[i, j + 1] + self.T[i, j - 1] - 4 * self.T[i, j]
+                    self.T[i+1, j] + self.T[i-1, j] +
+                    self.T[i, j+1] + self.T[i, j-1] - 4 * self.T[i, j]
                 )
-        
-        # Reapply boundary conditions
-        self.T_updated[:, 0] = self.T_hot   # Left boundary
-        self.T_updated[:, -1] = self.T_cold  # Right boundary
-        self.T_updated[0, :] = self.T_hot   # Top boundary
-        self.T_updated[-1, :] = self.T_cold  # Bottom boundary
 
-        # Calculate the maximum temperature difference
+        # Calculate the maximum change between time steps
         max_diff = np.max(np.abs(self.T_updated - self.T))
 
-        # Update the temperature field
-        self.T[:] = self.T_updated
-        return max_diff
-    
-    def solve(self, T_f, tolerance=1e-5):
-        """Solve the 2D diffusion equation over time.
+        # Update the main concentration array
+        self.T = self.T_updated.copy()
 
-        Args:
-        T_f (float): Final simulation time in seconds.
-        tolerance (float, optional): Tolerance for convergence to steady state. Defaults to 1e-5.
+        # Apply boundary conditions: zero concentration at edges
+        self.T[0, :] = 0
+        self.T[-1, :] = 0
+        self.T[:, 0] = 0
+        self.T[:, -1] = 0
+
+        return max_diff
+
+    def solve(self, t_final, save_interval=10):
+        """
+        Solve the diffusion equation until a final time.
+
+        Keyword Arguments:
+        t_final -- Total simulation time in seconds.
+        save_interval -- Number of equally spaced profiles to save (default 10).
 
         Returns:
-        list: List of time steps.
-        list: List of temperature fields at different time steps.
+        time -- A list of times when profiles were saved.
+        temperature -- A list of 2D concentration arrays corresponding to saved times.
         """
-        steps = int(T_f / self.dt)  # Total number of time steps
-        time = [0]  # Time step storage
-        temperature = [self.T.copy()]  # Store the initial temperature field
-        
-        # Time loop
-        for step in range(steps):
-            diff = self.time_step_FTCS()  # Perform a single time step
-            
-            # Store results at each step
-            time.append((step + 1) * self.dt)
-            temperature.append(self.T.copy())
-            
-            # Check for steady state
-            if diff < tolerance:
-                print(f"Steady state reached at time {time[-1]:.2f} s.")
-                break
-        
+        steps = int(t_final / self.dt)  # Total number of simulation steps
+        save_steps = steps // save_interval  # Steps between saving profiles
+        time = [0]  # List of times for saved profiles
+        temperature = [self.T.copy()]  # Save initial concentration profile
+
+        for n in range(steps):
+            diff = self.time_step_FTCS()  # Perform a time step
+
+            # Save profiles at specified intervals
+            if n % save_steps == 0:
+                time.append((n+1) * self.dt)  # Append the current simulation time
+                temperature.append(self.T.copy())  # Save the concentration array
+
         return time, temperature
-    
+
     def plot_results(self, time, temperature):
-        """Plot the temperature distribution as heatmaps at selected time steps.
-
-        Args:
-        time (list): List of time steps.
-        temperature (list): List of temperature fields at different time steps.
         """
-        step_interval = max(len(time) // 4, 1)  # Select 4 time steps for visualization
-        plt.figure(figsize=(10, 6))
-        
-        # Plot temperature distribution at selected time steps
-        for idx in range(0, len(time), step_interval):
-            plt.imshow(temperature[idx], cmap=cm.jet, origin="lower", extent=[0, self.L, 0, self.L],
-                       vmin=self.T_cold, vmax=self.T_hot)
-            plt.colorbar(label="Temperature (°C)")
-            plt.title(f"Temperature Distribution at t = {time[idx]:.2f} s")
-            plt.xlabel("X Position (cm)")
-            plt.ylabel("Y Position (cm)")
-            plt.show()
+        Plot saved concentration profiles at various times.
 
+        Keyword Arguments:
+        time -- List of times corresponding to saved profiles.
+        temperature -- List of saved 2D concentration profiles.
+        """
+        for t, T in zip(time, temperature):
+            plt.figure(figsize=(8, 6))  # Set figure size for plots
+            plt.contourf(self.X, self.Y, T, levels=20, cmap='hot')  # Contour plot of concentrations
+            plt.colorbar(label='Concentration')  # Add a colorbar
+            plt.title(f"Concentration at t = {t:.2f} s")  # Add a title with time step
+            plt.xlabel("x (cm)")  # Label x-axis
+            plt.ylabel("y (cm)")  # Label y-axis
+            plt.axis('equal')  # Maintain aspect ratio
+            plt.show()  # Display the plot
 
-        
