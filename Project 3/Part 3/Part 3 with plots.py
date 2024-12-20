@@ -192,27 +192,33 @@ steps = np.arange(num_steps + 1)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
 # Plot MSD
-for i, particle_count in enumerate(particle_numbers):
-    ax1.plot(steps, results[i][0], label=f'# of particles = {particle_count}')
-ax1.set_xlabel('Steps')
-ax1.set_ylabel(r'$<r^2>$')
-ax1.set_title('Mean Square Displacement (MSD)')
-ax1.legend()
-ax1.grid(True)
+# for i, particle_count in enumerate(particle_numbers):
+#     ax1.plot(steps, results[i][0], label=f'# of particles = {particle_count}')
+# ax1.set_xlabel('Steps')
+# ax1.set_ylabel(r'$<r^2>$')
+# ax1.set_title('Mean Square Displacement (MSD)')
+# ax1.legend()
+# ax1.grid(True)
 
 # Plot RMSD
-for i, particle_count in enumerate(particle_numbers):
-    ax2.plot(steps, results[i][1], label=f'# of particles = {particle_count}')
-ax2.set_xlabel('Steps')
-ax2.set_ylabel(r'$\sqrt{<r^2>}$')
-ax2.set_title('Root Mean Square Displacement (RMSD)')
-ax2.legend()
-ax2.grid(True)
+# for i, particle_count in enumerate(particle_numbers):
+#     ax2.plot(steps, results[i][1], label=f'# of particles = {particle_count}')
+# ax2.set_xlabel('Steps')
+# ax2.set_ylabel(r'$\sqrt{<r^2>}$')
+# ax2.set_title('Root Mean Square Displacement (RMSD)')
+# ax2.legend()
+# ax2.grid(True)
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 # Run simulation with 10000 particles
-simulator = RandomWalkSimulator(particle_count=10000, step_count=10000, step_size=1.0)
-simulator.simulate_walks()
-simulator.plot_position_histograms(steps_to_plot=[10, 1000, 5000, 10000], bin_sizes=[10, 100, 1000])
+# simulator = RandomWalkSimulator(particle_count=10000, step_count=10000, step_size=1.0)
+# simulator.simulate_walks()
+# simulator.plot_position_histograms(steps_to_plot=[10, 1000, 5000, 10000], bin_sizes=[10, 100, 1000])
+
+# Plot cross sections at the same times used for histograms
+steps = [10, 1000, 5000, 10000]
+for step in steps:
+    print(f"\nPlotting cross sections for step {step}")
+    simulator.plot_cross_section(step)
