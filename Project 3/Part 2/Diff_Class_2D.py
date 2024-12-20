@@ -107,8 +107,8 @@ class DiffusionSolver2D:
         """
         plt.figure(figsize=(8, 6))  # Set figure size for plots
         plt.contourf(self.X, self.Y, self.T, levels=20, cmap='hot')  # Contour plot of concentrations
-        plt.colorbar(label='Concentration')  # Add a colorbar
-        plt.title(f"D = {self.D} cm^2/s at t = {time}")  # Add a title with time step
+        plt.colorbar(label='Concentration')  # Add a colorbar with concentration values
+        plt.title(f"D = {self.D} $cm^2/s$")  # Add a title with time step
         plt.xlabel("x (cm)")  # Label x-axis
         plt.ylabel("y (cm)")  # Label y-axis
         plt.axis('equal')  # Maintain aspect ratio
