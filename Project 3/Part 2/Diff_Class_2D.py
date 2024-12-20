@@ -9,21 +9,21 @@ class DiffusionSolver2D:
         Initialize the Diffusion Solver for a 2D grid.
 
         Keyword Arguments:
-        D -- Thermal Diffusivity in cm^2/s.
+        D -- Diffusion coefficient in cm^2/s.
         L -- Domain size in cm (default 2.0 cm).
         dx -- Grid spacing in cm (default 0.05 cm).
         A -- Initial concentration value at the center (default 1.0).
         """
-        self.D = D  # Diffusion coefficient
-        self.L = L  # Length of the simulation domain
-        self.dx = dx  # Distance between grid points
-        self.A = A  # Initial peak concentration
+        self.D = D  # Diffusion coefficient in cm^2/s
+        self.L = L  # Length of the simulation domain in cm
+        self.dx = dx  # Distance between grid points in cm
+        self.A = A  # Initial peak concentration at the grid center
 
-        # Calculate time step size for stability
-        self.dt = (dx**2) / (4 * D) * 0.75  # Stability time step scaled to ensure stability criterion is met
+        # Calculate time step size for stability and scale it for safety
+        self.dt = (dx**2) / (4 * D) * 0.9  # Stability time step scaled by 0.9
         self.k = D * self.dt / dx**2  # Non-dimensional diffusion constant
 
-        # Stability check for each time step
+        # Stability check for the time step
         if self.k >= 0.25:
             raise ValueError(f"Stability condition not met. k = {self.k} is too large.")
 
@@ -97,20 +97,73 @@ class DiffusionSolver2D:
 
         return time, temperature
 
-    def plot_results(self, time, temperature):
+    def compute_msd(self, temperature):
         """
-        Plot saved concentration profiles at various times.
+        Compute the Mean Squared Displacement (MSD) at each saved time step.
+
+        Keyword Arguments:
+        temperature -- List of saved 2D concentration profiles.
+
+        Returns:
+        msd -- List of MSD values for each time step.
+        """
+        msd = []  # Initialize list to store MSD values
+        for T in temperature:
+            # Create meshgrid for squared distances
+            x_squared = self.X**2
+            y_squared = self.Y**2
+
+            # Compute MSD: \langle r^2 \rangle = \sum c(x, y) * (x^2 + y^2) / \sum c(x, y)
+            msd_value = np.sum(T * (x_squared + y_squared)) / np.sum(T)
+            msd.append(msd_value)
+
+        return msd
+
+    def plot_msd(self, time, msd):
+        """
+        Plot Mean Squared Displacement (MSD) as a function of time.
+
+        Keyword Arguments:
+        time -- List of times corresponding to saved profiles.
+        msd -- List of MSD values for each time step.
+        """
+        plt.figure(figsize=(8, 6))  # Set figure size for plots
+        plt.plot(time, msd, marker='o', linestyle='-', color='b')  # MSD vs. time plot
+        plt.xlabel("Time (s)")  # Label x-axis
+        plt.ylabel("Mean Squared Displacement (cm^2)")  # Label y-axis
+        plt.title("Mean Squared Displacement vs Time")  # Title
+        plt.grid(True)  # Add grid lines
+        plt.show()  # Display the plot
+
+    def plot_results(self, time, temperature, num_plots=4):
+        """
+        Plot saved concentration profiles at various times in a grid layout.
 
         Keyword Arguments:
         time -- List of times corresponding to saved profiles.
         temperature -- List of saved 2D concentration profiles.
+        num_plots -- Number of profiles to display (default 4).
         """
-        plt.figure(figsize=(8, 6))  # Set figure size for plots
-        plt.contourf(self.X, self.Y, self.T, levels=20, cmap='hot')  # Contour plot of concentrations
-        plt.colorbar(label='Concentration')  # Add a colorbar with concentration values
-        plt.title(f"D = {self.D} $cm^2/s$")  # Add a title with time step
-        plt.xlabel("x (cm)")  # Label x-axis
-        plt.ylabel("y (cm)")  # Label y-axis
-        plt.axis('equal')  # Maintain aspect ratio
-        plt.show()  # Display the plot
+        # Select evenly spaced profiles for time plots
+        indices = np.linspace(0, len(time) - 1, num_plots, dtype=int)
+        fig, axes = plt.subplots(2, 2, figsize=(12, 12))  # Create 2x2 subplot grid
+        axes = axes.ravel()  # Flatten axes array for easy iteration
+
+        for idx, ax in zip(indices, axes):
+            # Plot the concentration profile for the selected time
+            im = ax.contourf(self.X, self.Y, temperature[idx], levels=20, cmap='hot')
+            ax.set_title(f't = {time[idx]:.3f} s')  # Add title with time
+            ax.set_xlabel('x (cm)')  # Label x-axis
+            ax.set_ylabel('y (cm)')  # Label y-axis
+            ax.set_aspect('equal')  # Maintain equal aspect ratio
+
+            # Add colorbar for each plot
+            cbar = fig.colorbar(im, ax=ax)
+            cbar.set_label('Concentration')
+
+        plt.suptitle(rf'Diffusion Evolution (D = {self.D} $cm^2/s$)', fontsize=16)  # Super title
+        plt.tight_layout()  # Adjust layout
+        plt.show()  # Display the plots
+
+
 
