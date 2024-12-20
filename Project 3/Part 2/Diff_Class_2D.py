@@ -105,13 +105,12 @@ class DiffusionSolver2D:
         time -- List of times corresponding to saved profiles.
         temperature -- List of saved 2D concentration profiles.
         """
-        for t, T in zip(time, temperature):
-            plt.figure(figsize=(8, 6))  # Set figure size for plots
-            plt.contourf(self.X, self.Y, T, levels=20, cmap='hot')  # Contour plot of concentrations
-            plt.colorbar(label='Concentration')  # Add a colorbar
-            plt.title(f"Concentration at t = {t:.2f} s")  # Add a title with time step
-            plt.xlabel("x (cm)")  # Label x-axis
-            plt.ylabel("y (cm)")  # Label y-axis
-            plt.axis('equal')  # Maintain aspect ratio
-            plt.show()  # Display the plot
+        plt.figure(figsize=(8, 6))  # Set figure size for plots
+        plt.contourf(self.X, self.Y, self.T, levels=20, cmap='hot')  # Contour plot of concentrations
+        plt.colorbar(label='Concentration')  # Add a colorbar
+        plt.title(f"Case D = {self.D:.2f} cm^2/s")  # Add a title with time step
+        plt.xlabel("x (cm)")  # Label x-axis
+        plt.ylabel("y (cm)")  # Label y-axis
+        plt.axis('equal')  # Maintain aspect ratio
+        plt.show()  # Display the plot
 
