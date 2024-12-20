@@ -5,7 +5,8 @@ class RandomWalkSimulator:
     """
     A simulator for 2D random walks involving multiple particles.
 
-    The simulation involves a specified number of particles performing random walks with a fixed step size and random direction for each step.
+    The simulation involves a specified number of particles performing random walks with a fixed step size 
+    and random direction for each step.
     """
 
     def __init__(self, particle_count=1000, step_count=10000, step_size=1.0):
