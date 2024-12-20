@@ -166,7 +166,7 @@ class RandomWalkSimulator:
         plt.show()
 
 # Test different particle numbers
-num_steps = 15000
+num_steps = 10000
 particle_numbers = [10, 100, 1000, 10000]
 step_length = 1.0
 results = []
@@ -179,7 +179,13 @@ for particle_count in particle_numbers:
 
     # Compute MSD and RMSD
     msd, rmsd = simulator.calculate_mean_squared_displacement()
-    results.append((msd, rmsd))
+    alpha, C = simulator.fit_to_power_law(msd)
+
+    print(f"Particle count: {particle_count}")
+    print(f"  Power law exponent (alpha): {alpha:.4f}")
+    print(f"  Coefficient (C): {C:.4f}")
+
+    results.append((msd, rmsd, alpha, C))
 
 # Plot results
 steps = np.arange(num_steps + 1)
