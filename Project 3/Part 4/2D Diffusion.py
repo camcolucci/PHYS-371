@@ -119,7 +119,7 @@ class DiffusionAnalysis2D:
 
         return wave_numbers, spectrum
 
-    def compute_1d_autocorrelation(self, spectrum):
+    def compute_1d_autocorrelation(self, spectrum, normalize=True):
         """
         Compute 1D autocorrelation function from power spectrum using IFFT.
 
@@ -127,12 +127,16 @@ class DiffusionAnalysis2D:
         ------------------
         spectrum : np.ndarray
             1D power spectrum data.
+        normalize : bool, optional
+            Whether to normalize the autocorrelation function (default True).
 
         Returns:
         --------
         np.ndarray : Autocorrelation function values.
         """
         autocorr_function = np.fft.ifft(np.fft.ifftshift(spectrum)).real
+        if normalize:
+            autocorr_function /= np.max(autocorr_function)
         return autocorr_function
 
     def compute_2d_autocorrelation(self):
@@ -168,7 +172,7 @@ class DiffusionAnalysis2D:
         plt.show()
 
     @staticmethod
-    def extract_1d_slices(histogram, x_bins, y_bins):
+    def make_1d_slice(histogram, x_bins, y_bins):
         """
         Extract 1D slices from the 2D histogram data along x=0 and y=0.
 
@@ -183,19 +187,19 @@ class DiffusionAnalysis2D:
 
         Returns:
         --------
-        tuple : (x_profile, y_profile, x_midpoints, y_midpoints)
+        tuple : (x_profile, y_profile, x_mid, y_mid)
             1D slices along x=0 and y=0, and the corresponding bin centers.
         """
-        x_midpoints = (x_bins[:-1] + x_bins[1:]) / 2
-        y_midpoints = (y_bins[:-1] + y_bins[1:]) / 2
+        x_mid = (x_bins[:-1] + x_bins[1:]) / 2
+        y_mid = (y_bins[:-1] + y_bins[1:]) / 2
 
-        x_zero_idx = np.abs(x_midpoints).argmin()
-        y_zero_idx = np.abs(y_midpoints).argmin()
+        x_zero_idx = np.abs(x_mid).argmin()
+        y_zero_idx = np.abs(y_mid).argmin()
 
         x_profile = histogram[x_zero_idx, :]
         y_profile = histogram[:, y_zero_idx]
 
-        return x_profile, y_profile, x_midpoints, y_midpoints
+        return x_profile, y_profile, x_mid, y_mid
 
 # Parameters
 file_name = "diffusion_data.pkl"
@@ -222,7 +226,7 @@ plt.xlabel("x")
 plt.ylabel("y")
 plt.show()
 
-x_profile, y_profile, x_midpoints, y_midpoints = DiffusionAnalysis2D.extract_1d_slices(histogram, x_bins, y_bins)
+x_profile, y_profile, x_midpoints, y_midpoints = DiffusionAnalysis2D.make_1d_slice(histogram, x_bins, y_bins)
 
 plt.figure(figsize=(12, 5))
 plt.subplot(1, 2, 1)
@@ -252,6 +256,35 @@ plt.legend()
 plt.show()
 
 analysis = DiffusionAnalysis2D(histogram=histogram, x_bins=x_bins, y_bins=y_bins)
+
+# Compute and plot normalized and unnormalized 1D autocorrelation
+autocorr_1d_normalized = analysis.compute_1d_autocorrelation(spectrum, normalize=True)
+autocorr_1d_unnormalized = analysis.compute_1d_autocorrelation(spectrum, normalize=False)
+
+plt.figure(figsize=(12, 5))
+
+# Normalized plot
+plt.subplot(1, 2, 1)
+plt.plot(np.arange(len(autocorr_1d_normalized)), autocorr_1d_normalized, label="Normalized")
+plt.title("1D Autocorrelation Function (Normalized)")
+plt.xlabel("r")
+plt.ylabel("Autocorrelation")
+plt.ylim(-0.1, 1.1)  # Set limits for normalized data
+plt.grid(True)
+plt.legend()
+
+# Unnormalized plot
+plt.subplot(1, 2, 2)
+plt.plot(np.arange(len(autocorr_1d_unnormalized)), autocorr_1d_unnormalized, label="Unnormalized")
+plt.title("1D Autocorrelation Function (Unnormalized)")
+plt.xlabel("r")
+plt.ylabel("Autocorrelation")
+plt.ylim(np.min(autocorr_1d_unnormalized) - 100, np.max(autocorr_1d_unnormalized) + 100)  # Dynamic y-axis for unnormalized data
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.show()
 
 autocorr_2d = analysis.compute_2d_autocorrelation()
 
