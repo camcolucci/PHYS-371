@@ -1,218 +1,258 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import os
+from RandomWalk import RandomWalkSimulator
 
-class DiffusionSolver2D:
-    """Solves the 2D diffusion equation using FTCS method."""
-
-    def __init__(self, D, L=2.0, dx=0.05, A=1.0):
+class DiffusionAnalysisWizard:
+    """
+    DiffusionAnalysisWizard processes diffusion data to extract power spectra 
+    and autocorrelation functions from simulated random walks.
+    """
+    def __init__(self, histogram=None, x_bins=None, y_bins=None):
         """
-        Initialize the Diffusion Solver for a 2D grid.
+        Initialize the analysis with histogram data.
 
         Keyword Arguments:
-        D -- Diffusion coefficient in cm^2/s.
-        L -- Domain size in cm (default 2.0 cm).
-        dx -- Grid spacing in cm (default 0.05 cm).
-        A -- Initial concentration value at the center (default 1.0).
+        ------------------
+        histogram : np.ndarray, optional
+            2D histogram data for intensity I(x, y).
+        x_bins : np.ndarray, optional
+            Edges of the bins along the x-axis.
+        y_bins : np.ndarray, optional
+            Edges of the bins along the y-axis.
         """
-        self.D = D  # Diffusion coefficient in cm^2/s
-        self.L = L  # Length of the simulation domain in cm
-        self.dx = dx  # Distance between grid points in cm
-        self.A = A  # Initial peak concentration at the grid center
-
-        # Calculate time step size for stability and scale it for safety
-        self.dt = (dx**2) / (4 * D) * 0.9  # Stability time step scaled by 0.9
-        self.k = D * self.dt / dx**2  # Non-dimensional diffusion constant
-
-        # Stability check for the time step
-        if self.k >= 0.25:
-            raise ValueError(f"Stability condition not met. k = {self.k} is too large.")
-
-        # Set up the simulation grid
-        self.N = int(L / dx)  # Number of grid points per axis
-        self.x = np.linspace(-L/2, L/2, self.N)  # x-coordinates for the grid
-        self.y = np.linspace(-L/2, L/2, self.N)  # y-coordinates for the grid
-        self.X, self.Y = np.meshgrid(self.x, self.y)  # 2D coordinate grid
-
-        # Initialize the concentration arrays
-        self.T = np.zeros((self.N, self.N))  # Array for the current concentration
-        self.T_updated = np.zeros((self.N, self.N))  # Array for the next step
-
-        # Set the initial condition: peak concentration at the grid center
-        center = self.N // 2
-        self.T[center, center] = self.A
-
-    def time_step_FTCS(self):
-        """
-        Perform a single time step update using FTCS.
-
-        Returns:
-        max_diff -- The maximum change in concentration during the update.
-        """
-        for i in range(1, self.N-1):
-            for j in range(1, self.N-1):
-                # FTCS update for interior points based on neighbors
-                self.T_updated[i, j] = self.T[i, j] + self.k * (
-                    self.T[i+1, j] + self.T[i-1, j] +
-                    self.T[i, j+1] + self.T[i, j-1] - 4 * self.T[i, j]
-                )
-
-        # Calculate the maximum change between time steps
-        max_diff = np.max(np.abs(self.T_updated - self.T))
-
-        # Update the main concentration array
-        self.T = self.T_updated.copy()
-
-        # Apply boundary conditions: zero concentration at edges
-        self.T[0, :] = 0
-        self.T[-1, :] = 0
-        self.T[:, 0] = 0
-        self.T[:, -1] = 0
-
-        return max_diff
-
-    def solve(self, t_final, save_interval=10):
-        """
-        Solve the diffusion equation until a final time.
-
-        Keyword Arguments:
-        t_final -- Total simulation time in seconds.
-        save_interval -- Number of equally spaced profiles to save (default 10).
-
-        Returns:
-        time -- A list of times when profiles were saved.
-        temperature -- A list of 2D concentration arrays corresponding to saved times.
-        """
-        steps = int(t_final / self.dt)  # Total number of simulation steps
-        save_steps = steps // save_interval  # Steps between saving profiles
-        time = [0]  # List of times for saved profiles
-        temperature = [self.T.copy()]  # Save initial concentration profile
-
-        for n in range(steps):
-            diff = self.time_step_FTCS()  # Perform a time step
-
-            # Save profiles at specified intervals
-            if n % save_steps == 0:
-                time.append((n+1) * self.dt)  # Append the current simulation time
-                temperature.append(self.T.copy())  # Save the concentration array
-
-        return time, temperature
-
-    def compute_msd(self, temperature):
-        """
-        Compute the Mean Squared Displacement (MSD) at each saved time step.
-
-        Keyword Arguments:
-        temperature -- List of saved 2D concentration profiles.
-
-        Returns:
-        msd -- List of MSD values for each time step.
-        """
-        msd = []  # Initialize list to store MSD values
-        for T in temperature:
-            # Create meshgrid for squared distances
-            x_squared = self.X**2
-            y_squared = self.Y**2
-
-            # Compute MSD: \langle r^2 \rangle = \sum c(x, y) * (x^2 + y^2) / \sum c(x, y)
-            msd_value = np.sum(T * (x_squared + y_squared)) / np.sum(T)
-            msd.append(msd_value)
-
-        return msd
+        self.histogram = histogram
+        self.x_bins = x_bins
+        self.y_bins = y_bins
 
     @staticmethod
-    def simulate_and_save(N_p, N_s, dr, bins, file_path):
+    def simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count):
         """
-        Simulate diffusion and save the histogram data to a file.
+        Run the random walk simulation and save the histogram data as a pickle file.
 
         Keyword Arguments:
-        N_p -- Number of particles.
-        N_s -- Number of steps per particle.
-        dr -- Step size.
-        bins -- Number of bins for the histogram.
-        file_path -- Path to save the data file.
+        ------------------
+        file_name : str
+            Path to save the pickle file.
+        num_particles : int
+            Number of particles.
+        num_steps : int
+            Number of steps per particle.
+        step_size : float
+            Step size.
+        bin_count : int
+            Number of bins for the histogram.
         """
-        rw = DiffusionSolver2D(N_p=N_p, N_s=N_s, dr=dr)
-        rw.simulate()
-        hist, x_edges, y_edges = rw.compute_2d_histogram(bins=bins)
-        data = {'hist': hist, 'x_edges': x_edges, 'y_edges': y_edges}
-        with open(file_path, 'wb') as file:
+        Rand_Wlk_simulation = RandomWalkSimulator(particle_count=num_particles, step_count=num_steps, step_size=step_size)
+        Rand_Wlk_simulation.simulate_walks()
+        histogram, x_bins, y_bins = Rand_Wlk_simulation.compute_2d_histogram(bins=bin_count)
+
+        data = {'hist': histogram, 'x_edges': x_bins, 'y_edges': y_bins}
+        with open(file_name, 'wb') as file:
             pickle.dump(data, file)
 
     @staticmethod
-    def load_saved_data(file_path):
+    def load_data(file_name):
         """
-        Load histogram data from a file.
+        Load pickled histogram data from file.
 
         Keyword Arguments:
-        file_path -- Path to the file containing saved data.
+        ------------------
+        file_name : str
+            Path to the pickle file.
 
         Returns:
-        hist -- 2D histogram data.
-        x_edges -- Bin edges along the x-axis.
-        y_edges -- Bin edges along the y-axis.
+        --------
+        tuple : (histogram, x_bins, y_bins)
         """
-        with open(file_path, 'rb') as file:
+        with open(file_name, 'rb') as file:
             data = pickle.load(file)
         return data['hist'], data['x_edges'], data['y_edges']
 
-    def plot_msd(self, time, msd):
+    def plot_slices(self):
         """
-        Plot Mean Squared Displacement (MSD) as a function of time.
+        Plot slices of I(x, y) along x=0 and y=0.
+        """
+        x_midpoints = (self.x_bins[:-1] + self.x_bins[1:]) / 2
+        y_midpoints = (self.y_bins[:-1] + self.y_bins[1:]) / 2
+
+        x_profile = self.histogram[self.histogram.shape[0] // 2, :]
+        y_profile = self.histogram[:, self.histogram.shape[1] // 2]
+
+        plt.figure(figsize=(12, 5))
+        plt.subplot(1, 2, 1)
+        plt.plot(x_midpoints, x_profile)
+        plt.title("Slice: I(x=0, y)")
+        plt.xlabel("y")
+        plt.ylabel("Intensity")
+
+        plt.subplot(1, 2, 2)
+        plt.plot(y_midpoints, y_profile)
+        plt.title("Slice: I(x, y=0)")
+        plt.xlabel("x")
+        plt.ylabel("Intensity")
+
+        plt.tight_layout()
+        plt.show()
+
+    @staticmethod
+    def compute_power_spectrum(profile_data):
+        """
+        Compute the 1D power spectrum of a slice using FFT.
 
         Keyword Arguments:
-        time -- List of times corresponding to saved profiles.
-        msd -- List of MSD values for each time step.
-        """
-        plt.figure(figsize=(8, 6))  # Set figure size for plots
-        plt.plot(time, msd, marker='o', linestyle='-', color='b')  # MSD vs. time plot
-        plt.xlabel("Time (s)")  # Label x-axis
-        plt.ylabel("Mean Squared Displacement (cm^2)")  # Label y-axis
-        plt.title("Mean Squared Displacement vs Time")  # Title
-        plt.grid(True)  # Add grid lines
-        plt.show()  # Display the plot
+        ------------------
+        profile_data : np.ndarray
+            1D data slice (e.g., I(x=0, y) or I(x, y=0)).
 
-    def plot_results(self, time, temperature, num_plots=4):
+        Returns:
+        --------
+        tuple : (wave_numbers, spectrum)
+            Wave numbers and power spectrum values.
         """
-        Plot saved concentration profiles at various times in a grid layout.
+        fft_output = np.fft.fft(profile_data)
+        spectrum = np.abs(fft_output)**2
+
+        wave_numbers = np.fft.fftshift(np.fft.fftfreq(len(profile_data)))
+        spectrum = np.fft.fftshift(spectrum)
+
+        return wave_numbers, spectrum
+
+    def compute_1d_autocorrelation(self, spectrum):
+        """
+        Compute 1D autocorrelation function from power spectrum using IFFT.
 
         Keyword Arguments:
-        time -- List of times corresponding to saved profiles.
-        temperature -- List of saved 2D concentration profiles.
-        num_plots -- Number of profiles to display (default 4).
+        ------------------
+        spectrum : np.ndarray
+            1D power spectrum data.
+
+        Returns:
+        --------
+        np.ndarray : Autocorrelation function values.
         """
-        # Select evenly spaced profiles for time plots
-        indices = np.linspace(0, len(time) - 1, num_plots, dtype=int)
-        fig, axes = plt.subplots(2, 2, figsize=(12, 12))  # Create 2x2 subplot grid
-        axes = axes.ravel()  # Flatten axes array for easy iteration
+        autocorr_function = np.fft.ifft(np.fft.ifftshift(spectrum)).real
+        return autocorr_function
 
-        for idx, ax in zip(indices, axes):
-            # Plot the concentration profile for the selected time
-            im = ax.contourf(self.X, self.Y, temperature[idx], levels=20, cmap='hot')
-            ax.set_title(f't = {time[idx]:.3f} s')  # Add title with time
-            ax.set_xlabel('x (cm)')  # Label x-axis
-            ax.set_ylabel('y (cm)')  # Label y-axis
-            ax.set_aspect('equal')  # Maintain equal aspect ratio
+    def compute_2d_autocorrelation(self):
+        """
+        Compute the 2D autocorrelation function using FFT.
 
-            # Add colorbar for each plot
-            cbar = fig.colorbar(im, ax=ax)
-            cbar.set_label('Concentration')
+        Returns:
+        --------
+        np.ndarray : 2D autocorrelation function values.
+        """
+        fft_2d = np.fft.fft2(self.histogram)
+        spectrum_2d = np.abs(fft_2d)**2
+        autocorr_2d = np.fft.fftshift(np.fft.ifft2(spectrum_2d).real)
+        autocorr_2d /= np.max(autocorr_2d)
 
-        plt.suptitle(rf'Diffusion Evolution (D = {self.D} $cm^2/s$)', fontsize=16)  # Super title
-        plt.tight_layout()  # Adjust layout
-        plt.show()  # Display the plots
+        return autocorr_2d
 
-# Example usage
-if __name__ == "__main__":
-    # Initialize the solver with default parameters
-    solver = DiffusionSolver2D(D=0.18, L=2.0, dx=0.05, A=1.0)
+    def plot_2d_autocorrelation(self, autocorr_2d):
+        """
+        Plot the 2D autocorrelation function as a contour plot.
 
-    # Run the solver for 1 second and save 10 intermediate profiles
-    times, snapshots = solver.solve(t_final=1, save_interval=10)
+        Keyword Arguments:
+        ------------------
+        autocorr_2d : np.ndarray
+            2D autocorrelation function values.
+        """
+        plt.figure(figsize=(8, 6))
+        plt.contourf(autocorr_2d, cmap='viridis')
+        plt.colorbar(label="Autocorrelation")
+        plt.title("2D Autocorrelation Function")
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
 
-    # Plot the results
-    solver.plot_results(times, snapshots)
+    @staticmethod
+    def extract_1d_slices(histogram, x_bins, y_bins):
+        """
+        Extract 1D slices from the 2D histogram data along x=0 and y=0.
 
-    # Compute and plot Mean Squared Displacement (MSD)
-    msd = solver.compute_msd(snapshots)
-    solver.plot_msd(times, msd)
+        Keyword Arguments:
+        ------------------
+        histogram : np.ndarray
+            2D histogram data.
+        x_bins : np.ndarray
+            Bin edges along the x-axis.
+        y_bins : np.ndarray
+            Bin edges along the y-axis.
+
+        Returns:
+        --------
+        tuple : (x_profile, y_profile, x_midpoints, y_midpoints)
+            1D slices along x=0 and y=0, and the corresponding bin centers.
+        """
+        x_midpoints = (x_bins[:-1] + x_bins[1:]) / 2
+        y_midpoints = (y_bins[:-1] + y_bins[1:]) / 2
+
+        x_zero_idx = np.abs(x_midpoints).argmin()
+        y_zero_idx = np.abs(y_midpoints).argmin()
+
+        x_profile = histogram[x_zero_idx, :]
+        y_profile = histogram[:, y_zero_idx]
+
+        return x_profile, y_profile, x_midpoints, y_midpoints
+
+# Parameters
+file_name = "diffusion_data.pkl"
+num_particles = 10000
+num_steps = 10000
+step_size = 1.0
+bin_count = 100
+current_step = num_steps
+
+if os.path.exists(file_name):
+    print(f"The results file '{file_name}' already exists.")
+    recalculate = input("Recalculate the random walk data? [y,n]: ").strip().lower()
+    if recalculate == 'y':
+        DiffusionAnalysisWizard.simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count)
+else:
+    DiffusionAnalysisWizard.simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count)
+
+histogram, x_bins, y_bins = DiffusionAnalysisWizard.load_data(file_name)
+
+plt.imshow(histogram.T, origin='lower', extent=[x_bins[0], x_bins[-1], y_bins[0], y_bins[-1]], aspect='auto')
+plt.colorbar(label="Intensity (I(x, y))")
+plt.title(f"2D Histogram of Particle Distribution at Step {current_step}")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.show()
+
+x_profile, y_profile, x_midpoints, y_midpoints = DiffusionAnalysisWizard.extract_1d_slices(histogram, x_bins, y_bins)
+
+plt.figure(figsize=(12, 5))
+plt.subplot(1, 2, 1)
+plt.plot(y_midpoints, y_profile)
+plt.title("Intensity Slice: I(x=0, y)")
+plt.xlabel("y")
+plt.ylabel("Intensity")
+
+plt.subplot(1, 2, 2)
+plt.plot(x_midpoints, x_profile)
+plt.title("Intensity Slice: I(x, y=0)")
+plt.xlabel("x")
+plt.ylabel("Intensity")
+
+plt.tight_layout()
+plt.show()
+
+wave_numbers, spectrum = DiffusionAnalysisWizard.compute_power_spectrum(y_profile)
+
+plt.figure(figsize=(8, 5))
+plt.plot(wave_numbers, spectrum, label="Power Spectrum")
+plt.title("1D Power Spectrum of I(x=0, y)")
+plt.xlabel("Wave Number (k)")
+plt.ylabel("Power Spectrum")
+plt.grid(True)
+plt.legend()
+plt.show()
+
+analysis = DiffusionAnalysisWizard(histogram=histogram, x_bins=x_bins, y_bins=y_bins)
+
+autocorr_2d = analysis.compute_2d_autocorrelation()
+
+analysis.plot_2d_autocorrelation(autocorr_2d)

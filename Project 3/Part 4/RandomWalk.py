@@ -230,23 +230,4 @@ for particle_count in particle_numbers:
 steps = np.arange(num_steps + 1)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
-# Plot the Mean Square Displacement (MSD) for different particle numbers
-for i, particle_count in enumerate(particle_numbers):
-    ax1.plot(steps, results[i][0], label=f'# of particles = {particle_count}')
-ax1.set_xlabel('Steps')
-ax1.set_ylabel(r'$<r^2>$')
-ax1.set_title('Mean Square Displacement (MSD)')
-ax1.legend()
-ax1.grid(True)
 
-# Plot the Root Mean Square Displacement (RMSD) for different particle numbers
-for i, particle_count in enumerate(particle_numbers):
-    ax2.plot(steps, results[i][1], label=f'# of particles = {particle_count}')
-ax2.set_xlabel('Steps')
-ax2.set_ylabel(r'$\sqrt{<r^2>}$')
-ax2.set_title('Root Mean Square Displacement (RMSD)')
-ax2.legend()
-ax2.grid(True)
-
-plt.tight_layout()
-plt.show()
