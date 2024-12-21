@@ -4,9 +4,9 @@ import pickle
 import os
 from RandomWalk import RandomWalkSimulator
 
-class DiffusionAnalysisWizard:
+class DiffusionAnalysis2D:
     """
-    DiffusionAnalysisWizard processes diffusion data to extract power spectra 
+    DiffusionAnalysis2D processes diffusion data to extract power spectra 
     and autocorrelation functions from simulated random walks.
     """
     def __init__(self, histogram=None, x_bins=None, y_bins=None):
@@ -209,20 +209,20 @@ if os.path.exists(file_name):
     print(f"The results file '{file_name}' already exists.")
     recalculate = input("Recalculate the random walk data? [y,n]: ").strip().lower()
     if recalculate == 'y':
-        DiffusionAnalysisWizard.simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count)
+        DiffusionAnalysis2D.simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count)
 else:
-    DiffusionAnalysisWizard.simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count)
+    DiffusionAnalysis2D.simulate_and_save(file_name, num_particles, num_steps, step_size, bin_count)
 
-histogram, x_bins, y_bins = DiffusionAnalysisWizard.load_data(file_name)
+histogram, x_bins, y_bins = DiffusionAnalysis2D.load_data(file_name)
 
 plt.imshow(histogram.T, origin='lower', extent=[x_bins[0], x_bins[-1], y_bins[0], y_bins[-1]], aspect='auto')
-plt.colorbar(label="Intensity (I(x, y))")
-plt.title(f"2D Histogram of Particle Distribution at Step {current_step}")
+plt.colorbar(label="Intensity")
+plt.title(f"Histogram of 2D Particle Distribution after {current_step} Steps")
 plt.xlabel("x")
 plt.ylabel("y")
 plt.show()
 
-x_profile, y_profile, x_midpoints, y_midpoints = DiffusionAnalysisWizard.extract_1d_slices(histogram, x_bins, y_bins)
+x_profile, y_profile, x_midpoints, y_midpoints = DiffusionAnalysis2D.extract_1d_slices(histogram, x_bins, y_bins)
 
 plt.figure(figsize=(12, 5))
 plt.subplot(1, 2, 1)
@@ -240,7 +240,7 @@ plt.ylabel("Intensity")
 plt.tight_layout()
 plt.show()
 
-wave_numbers, spectrum = DiffusionAnalysisWizard.compute_power_spectrum(y_profile)
+wave_numbers, spectrum = DiffusionAnalysis2D.compute_power_spectrum(y_profile)
 
 plt.figure(figsize=(8, 5))
 plt.plot(wave_numbers, spectrum, label="Power Spectrum")
@@ -251,7 +251,7 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
-analysis = DiffusionAnalysisWizard(histogram=histogram, x_bins=x_bins, y_bins=y_bins)
+analysis = DiffusionAnalysis2D(histogram=histogram, x_bins=x_bins, y_bins=y_bins)
 
 autocorr_2d = analysis.compute_2d_autocorrelation()
 
