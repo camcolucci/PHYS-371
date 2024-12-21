@@ -265,7 +265,7 @@ plt.figure(figsize=(12, 5))
 
 # Normalized plot
 plt.subplot(1, 2, 1)
-plt.plot(np.arange(len(autocorr_1d_normalized)), autocorr_1d_normalized, label="Normalized")
+plt.plot(np.arange(-len(autocorr_1d_normalized)//2, len(autocorr_1d_normalized)//2), autocorr_1d_normalized, label="Normalized")
 plt.title("1D Autocorrelation Function (Normalized)")
 plt.xlabel("r")
 plt.ylabel("Autocorrelation")
@@ -275,7 +275,7 @@ plt.legend()
 
 # Unnormalized plot
 plt.subplot(1, 2, 2)
-plt.plot(np.arange(len(autocorr_1d_unnormalized)), autocorr_1d_unnormalized, label="Unnormalized")
+plt.plot(np.arange(-len(autocorr_1d_unnormalized)//2, len(autocorr_1d_unnormalized)//2), autocorr_1d_unnormalized, label="Unnormalized")
 plt.title("1D Autocorrelation Function (Unnormalized)")
 plt.xlabel("r")
 plt.ylabel("Autocorrelation")
